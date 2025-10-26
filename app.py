@@ -87,7 +87,6 @@ def create_app(db_url=None):
 
     @app.before_first_request
     def create_tables():
-        from db import db
         db.create_all()
 
     api.register_blueprint(ItemBlueprint)
