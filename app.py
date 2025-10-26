@@ -27,14 +27,17 @@ def create_app(db_url=None):
     app.config["OPENAPI_SWAGGER_UI_URL"] = "https://cdn.jsdelivr.net/npm/swagger-ui-dist/"
     app.config["SQLALCHEMY_DATABASE_URI"] = db_url or os.getenv("DATABASE_URL", "sqlite:///data.db")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["JWT_SECRET_KEY"] = "64721868212957114436550972429745731040"
     
     db.init_app(app)
+    migrate = Migrate(app, db)
+    jwt = JWTManager(app)
     api = Api(app)
     
-    app.config["JWT_SECRET_KEY"] = "64721868212957114436550972429745731040"
-    jwt = JWTManager(app)
     
-    migrate = Migrate(app, db)
+    @app.before_first_request
+    def create_tables():
+        db.create_all()
     
     @jwt.token_in_blocklist_loader
     def check_if_token_in_blocklist(jwt_header, jwt_payload):
@@ -84,10 +87,6 @@ def create_app(db_url=None):
                 }
             ), 401,
         )
-
-    @app.before_first_request
-    def create_tables():
-        db.create_all()
 
     api.register_blueprint(ItemBlueprint)
     api.register_blueprint(StoreBlueprint)
