@@ -84,9 +84,11 @@ def create_app(db_url=None):
                 }
             ), 401,
         )
-    
-    #with app.app_context():
-    #    db.create_all()  # Create database tables for all models
+
+    @app.before_first_request
+    def create_tables():
+        from db import db
+        db.create_all()
 
     api.register_blueprint(ItemBlueprint)
     api.register_blueprint(StoreBlueprint)
