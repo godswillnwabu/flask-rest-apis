@@ -1,22 +1,8 @@
 FROM python:3.13-slim
-
-# expose ports for Flask app
-EXPOSE 5000 5678
-
 WORKDIR /app
-
 COPY requirements.txt .
-
-# Install dependencies
-RUN pip install -r requirements.txt
-
-# Install debugpy for remote debugging
-RUN pip install debugpy
-
-# Copy application code
+RUN pip install --no-cache-dir --upgrade -r requirements.txt
 COPY . .
-
-# Default command (overridden in docker-compose.yml)
-CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]
+CMD ["gunicorn", "--bind", "0.0.0.0:80", "app:create_app()"]
 
 
