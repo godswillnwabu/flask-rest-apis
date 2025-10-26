@@ -35,8 +35,7 @@ def create_app(db_url=None):
     api = Api(app)
     
     
-    @app.before_first_request
-    def create_tables():
+    with app.app_context():
         db.create_all()
     
     @jwt.token_in_blocklist_loader
