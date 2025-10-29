@@ -6,6 +6,7 @@ from flask_jwt_extended import jwt_required, get_jwt
 from db import db
 from models import StoreModel  # Import the in-memory items dictionary
 from schemas import StoreSchema  # Import the StoreSchema for validation
+from utilities.admin_decorator import admin_required
 
 blp = Blueprint("stores", __name__, description="Operations on stores")
 
@@ -21,6 +22,7 @@ class StoreList(MethodView):
     
 
     @jwt_required()
+    @admin_required
     @blp.arguments(StoreSchema)
     @blp.response(201, StoreSchema)
     def post(self, store_data):
@@ -50,6 +52,7 @@ class Store(MethodView):
     
     
     @jwt_required()
+    @admin_required
     @blp.arguments(StoreSchema)
     @blp.response(200, StoreSchema)
     def put(self, store_data, store_id):
@@ -69,13 +72,8 @@ class Store(MethodView):
 
 
     @jwt_required()
+    @admin_required
     def delete(self, store_id):
-        
-        # Check if Admin: Only Admins can delete a store 
-        # jwt = get_jwt()
-        # if not jwt.get("is_admin"):
-        #     abort(401, message="Admin privilege required.")
-            
         # Delete a store by its ID
         store = StoreModel.query.get_or_404(store_id)
         

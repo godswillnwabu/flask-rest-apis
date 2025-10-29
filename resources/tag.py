@@ -1,6 +1,8 @@
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
 from sqlalchemy.exc import SQLAlchemyError
+from flask_jwt_extended import jwt_required
+from utilities.admin_decorator import admin_required
 
 from db import db
 from models import TagModel, StoreModel
@@ -17,6 +19,9 @@ class TagsInStore(MethodView):
         # Return all tags
         return TagModel.query.all()
 
+
+    @jwt_required() 
+    @admin_required
     @blp.arguments(TagSchema)
     @blp.response(201, TagSchema)
     def post(self, tag_data):
@@ -53,6 +58,8 @@ class Tag(MethodView):
         return tag
 
 
+    @jwt_required()
+    @admin_required
     def delete(self, tag_id):
         # Delete a tag by its ID
         tag = TagModel.query.get_or_404(tag_id)

@@ -3,7 +3,7 @@ import secrets
 
 from flask import Flask, jsonify
 from flask_smorest import Api
-from flask_jwt_extended import JWTManager
+from flask_jwt_extended import JWTManager, get_jwt_identity, verify_jwt_in_request
 from flask_migrate import Migrate
 
 from db import db
@@ -37,6 +37,18 @@ def create_app(db_url=None):
     
     with app.app_context():
         db.create_all()
+        
+    @app.before_request   
+    def verify_user_still_exists():
+        try:
+            verify_jwt_in_request(optional=True)
+            user_id = get_jwt_identity()
+            if user_id:
+                user = models.UserModel.query.get(user_id)
+                if not user:
+                    return jsonify({"message": "User no longer exists."}), 401
+        except:
+            pass
     
     @jwt.token_in_blocklist_loader
     def check_if_token_in_blocklist(jwt_header, jwt_payload):
