@@ -11,10 +11,11 @@ from flask_jwt_extended import (
 from sqlalchemy import or_
 from db import db
 from blocklist import BLOCKLIST
-from models import UserModel
+from models import UserModel, TokenBlocklist
 from schemas import UserSchema, UserRegisterSchema
 from utilities.mail_utils import send_email
 from utilities.admin_decorator import admin_required
+from task import enqueue_welcome_email
 
 blp = Blueprint("Users", "users", description="Operations on users")
 
@@ -42,7 +43,10 @@ class UserRegister(MethodView):
         db.session.add(user)
         db.session.commit()
 
-        send_email(user_data["email"], user_data["username"])
+        enqueue_welcome_email(
+            user_data["email"],
+            user_data["username"]
+        )
 
         return {"message": "User created successfully."}, 201
 
@@ -87,16 +91,16 @@ class UserLogout(MethodView):
     @jwt_required()
     def post(self):
         jti = get_jwt()["jti"]
-        BLOCKLIST.add(jti)
-        
-        return {"message": "Successfully logged out."}
+        db.session.add(TokenBlocklist(jti=jti))
+        db.session.commit()
+
+        return {"message": "Successfully logged out."}, 200
     
     
     
 @blp.route("/user/<int:user_id>")
 class User(MethodView):
     @jwt_required()
-    @admin_required
     @blp.response(200, UserSchema)
     def get(self, user_id):
         user = UserModel.query.get_or_404(user_id)
@@ -108,9 +112,6 @@ class User(MethodView):
     @admin_required
     def delete(self, user_id):
         user = UserModel.query.get_or_404(user_id)
-        
-        jti = get_jwt()["jti"]
-        BLOCKLIST.add(jti)
         
         db.session.delete(user)
         db.session.commit()

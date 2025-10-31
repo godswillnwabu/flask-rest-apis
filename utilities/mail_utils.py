@@ -10,14 +10,22 @@ MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER")
 
 
 def send_email(to_email, username):
+    
+    subject = f"Welcome to My Store API, {username}!"
+    html_content = f"""
+    <html>
+    <body style="font-family: Arial, sans-serif; text-align: center; line-height: 1.6;">
+        <h2 style="color: #4CAF50;">Hello, {username}!</h2>
+        <p>Thank you for registering at <strong>My Store API</strong>!</p>
+        <p>We're excited to have you on board.</p>
+    </body>
+    </html>
+    """
     message = Mail(
         from_email=MAIL_DEFAULT_SENDER,
         to_emails=to_email,
-        subject=f"Hello {username},",
-        html_content=f"""
-        <h1>Hello {username},</h1>
-        <p>Welcome to our services!</p>
-        """
+        subject=subject,
+        html_content=html_content
     )
     try:
         sg = SendGridAPIClient(SENDGRID_API_KEY)

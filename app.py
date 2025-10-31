@@ -1,6 +1,6 @@
 import os
-import secrets
 
+from dotenv import load_dotenv
 from flask import Flask, jsonify
 from flask_smorest import Api
 from flask_jwt_extended import JWTManager, get_jwt_identity, verify_jwt_in_request
@@ -8,12 +8,14 @@ from flask_migrate import Migrate
 
 from db import db
 from blocklist import BLOCKLIST
-import models
+from models import UserModel, TokenBlocklist
 
 from resources.item import blp as ItemBlueprint
 from resources.store import blp as StoreBlueprint
 from resources.tag import blp as TagBlueprint
 from resources.user import blp as UserBlueprint
+
+load_dotenv()
 
 def create_app(db_url=None):
     app = Flask(__name__)
@@ -44,7 +46,7 @@ def create_app(db_url=None):
             verify_jwt_in_request(optional=True)
             user_id = get_jwt_identity()
             if user_id:
-                user = models.UserModel.query.get(user_id)
+                user = UserModel.query.get(user_id)
                 if not user:
                     return jsonify({"message": "User no longer exists."}), 401
         except:
@@ -52,9 +54,11 @@ def create_app(db_url=None):
     
     @jwt.token_in_blocklist_loader
     def check_if_token_in_blocklist(jwt_header, jwt_payload):
-        return jwt_payload["jti"] in BLOCKLIST
-    
-    
+        jti = jwt_payload["jti"]
+        token = TokenBlocklist.query.filter_by(jti=jti).first()
+        return token is not None
+
+
     @jwt.revoked_token_loader
     def revoked_token_callback(jwt_header, jwt_payload):
         return (

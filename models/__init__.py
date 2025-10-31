@@ -3,3 +3,4 @@ from models.store import StoreModel
 from models.tag import TagModel 
 from models.item_tags import item_tags
 from models.user import UserModel
+from models.token_blocklist import TokenBlocklist
